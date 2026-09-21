@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Borbogata | Moda feminina",
-  description: "Moda feminina com peças selecionadas para todos os momentos. Compre online com envio para todo o Brasil.",
+  title: "Borbogata | Ousada e sem limites",
+  description: "Moda feminina em Salvador para mulheres ousadas, autênticas e antenadas nas tendências. Borbogata: você ousada e sem limites.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

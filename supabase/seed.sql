@@ -6,8 +6,8 @@ values (
   'borbogata.com.br',
   '(71) 99999-9999',
   '@borbogata_modas',
-  '{"city":"Salvador","state":"BA"}'::jsonb,
-  '{"primary":"#6e1834","primaryDark":"#481022","accent":"#bd9261"}'::jsonb
+  '{"address":"Rua Simões Filhos, 13","district":"Boca do Rio","city":"Salvador","state":"BA"}'::jsonb,
+  '{"primary":"#5a2b5b","pink":"#ee5799","lilac":"#a175b2","cyan":"#7acdd4","lime":"#cbdd71","primary_font":"Alkaline Bold","secondary_font":"Acumin Pro ExtraCondensed Bold","slogan":"Ousada e Sem Limites"}'::jsonb
 )
 on conflict (slug) do update set
   name = excluded.name,
