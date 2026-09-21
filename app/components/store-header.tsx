@@ -17,6 +17,7 @@ export function StoreHeader() {
   const [count,setCount] = useState(0);
   useEffect(() => { const update=()=>setCount(readCartCount()); update(); window.addEventListener("cart-updated",update); window.addEventListener("storage",update); return()=>{window.removeEventListener("cart-updated",update);window.removeEventListener("storage",update)}; },[]);
   return <>
+    {storeConfig.demoMode&&<div className="demo-banner">Demonstração L7 · produtos, valores e frete ilustrativos</div>}
     <div className="announcement">Frete calculado pelo CEP · Enviamos para todo o Brasil</div>
     <header className="store-header">
       <button className="icon-button mobile-only" aria-label="Abrir menu" onClick={()=>setOpen(true)}><Menu size={21}/></button>

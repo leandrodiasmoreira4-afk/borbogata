@@ -12,4 +12,6 @@ export const storeConfig = {
   },
   shippingOrigin: "Salvador, BA",
   installments: 3,
+  organizationSlug: process.env.NEXT_PUBLIC_STORE_SLUG || "borbogata",
+  demoMode: !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 } as const;
