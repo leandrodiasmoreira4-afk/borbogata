@@ -1,0 +1,7 @@
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AddToCart } from "../../components/add-to-cart";
+import { StoreHeader } from "../../components/store-header";
+import { formatBRL, products } from "../../data/products";
+export default async function ProductPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const product=products.find(item=>item.slug===slug);if(!product)notFound();return <><StoreHeader/><main className="product-page"><div className="breadcrumbs"><Link href="/">Início</Link><span>/</span><Link href="/produtos">{product.category}</Link><span>/</span><strong>{product.name}</strong></div><div className="product-detail"><div className="detail-image"><Image src={product.image} alt={product.name} fill priority sizes="(max-width: 800px) 100vw, 55vw"/></div><section className="detail-info">{product.badge&&<span className="detail-badge">{product.badge}</span>}<p>{product.category}</p><h1>{product.name}</h1><div className="detail-price"><strong>{formatBRL(product.price)}</strong>{product.compareAt&&<s>{formatBRL(product.compareAt)}</s>}</div><small>3x de {formatBRL(product.price/3)} sem juros</small><p className="description">{product.description}</p><AddToCart slug={product.slug} sizes={product.sizes} colors={product.colors}/><div className="detail-notes"><p><strong>Envio:</strong> cálculo pelo CEP no carrinho</p><p><strong>Estoque:</strong> {product.stock} unidades disponíveis</p></div></section></div></main></>}
