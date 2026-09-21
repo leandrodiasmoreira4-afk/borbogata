@@ -348,16 +348,18 @@ alter table public.audit_logs enable row level security;
 
 create policy organizations_public_read on public.organizations for select to anon, authenticated using (is_active);
 create policy organizations_staff_update on public.organizations for update to authenticated using (private.is_org_admin(id)) with check (private.is_org_admin(id));
-create policy members_read_own on public.organization_members for select to authenticated using (user_id = (select auth.uid()) or private.is_org_admin(organization_id));
-create policy members_admin_all on public.organization_members for all to authenticated using (private.is_org_admin(organization_id)) with check (private.is_org_admin(organization_id));
+create policy members_read on public.organization_members for select to authenticated using (user_id = (select auth.uid()) or private.is_org_admin(organization_id));
+create policy members_admin_insert on public.organization_members for insert to authenticated with check (private.is_org_admin(organization_id));
+create policy members_admin_update on public.organization_members for update to authenticated using (private.is_org_admin(organization_id)) with check (private.is_org_admin(organization_id));
+create policy members_admin_delete on public.organization_members for delete to authenticated using (private.is_org_admin(organization_id));
 
-create policy categories_public_read on public.categories for select to anon, authenticated using (is_active);
+create policy categories_public_read on public.categories for select to anon using (is_active);
 create policy categories_staff_all on public.categories for all to authenticated using (private.can_manage_catalog(organization_id)) with check (private.can_manage_catalog(organization_id));
-create policy products_public_read on public.products for select to anon, authenticated using (status = 'active');
+create policy products_public_read on public.products for select to anon using (status = 'active');
 create policy products_staff_all on public.products for all to authenticated using (private.can_manage_catalog(organization_id)) with check (private.can_manage_catalog(organization_id));
-create policy variants_public_read on public.product_variants for select to anon, authenticated using (is_active and exists (select 1 from public.products p where p.id = product_id and p.status = 'active'));
+create policy variants_public_read on public.product_variants for select to anon using (is_active and exists (select 1 from public.products p where p.id = product_id and p.status = 'active'));
 create policy variants_staff_all on public.product_variants for all to authenticated using (private.can_manage_catalog(organization_id)) with check (private.can_manage_catalog(organization_id));
-create policy images_public_read on public.product_images for select to anon, authenticated using (exists (select 1 from public.products p where p.id = product_id and p.status = 'active'));
+create policy images_public_read on public.product_images for select to anon using (exists (select 1 from public.products p where p.id = product_id and p.status = 'active'));
 create policy images_staff_all on public.product_images for all to authenticated using (private.can_manage_catalog(organization_id)) with check (private.can_manage_catalog(organization_id));
 
 create policy customers_staff_all on public.customers for all to authenticated using (private.can_manage_orders(organization_id)) with check (private.can_manage_orders(organization_id));
