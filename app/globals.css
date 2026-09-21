@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
+@import "./collections.css";
 
 :root{--wine:#5a2b5b;--wine-dark:#5a2b5b;--pink:#ee5799;--lilac:#a175b2;--cyan:#7acdd4;--lime:#cbdd71;--cream:#fbfaf8;--ink:#201721;--muted:#756b70;--line:#eadfea;--background:#fff;--foreground:#201721;--card:#fff;--card-foreground:#201721;--popover:#fff;--popover-foreground:#201721;--primary:#5a2b5b;--primary-foreground:#fff;--secondary:#cbdd71;--secondary-foreground:#201721;--muted-foreground:#756b70;--accent:#a175b2;--accent-foreground:#fff;--destructive:#b42318;--border:#eadfea;--input:#d8cbd8;--ring:#ee5799;--radius:.4rem}
 .demo-banner{min-height:28px;display:grid;place-items:center;padding:.35rem 1rem;background:var(--lime);color:var(--wine);font-size:.72rem;font-weight:800;letter-spacing:.04em;text-align:center}.catalog-error{padding:2rem;border:1px solid var(--line);background:var(--cream);color:var(--muted);text-align:center}

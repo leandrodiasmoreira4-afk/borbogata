@@ -71,3 +71,29 @@ on conflict (organization_id, sku) do update set
   price_cents = excluded.price_cents,
   compare_at_cents = excluded.compare_at_cents,
   stock_quantity = excluded.stock_quantity;
+
+insert into public.collections (
+  organization_id, slug, name, description, status, is_featured, launched_at
+)
+select id, 'colecao-borbogata', 'Coleção Borbogata',
+  'Peças marcantes para viver cada momento com atitude.',
+  'active', true, current_date
+from public.organizations
+where slug = 'borbogata'
+on conflict (organization_id, slug) do update set
+  name = excluded.name,
+  description = excluded.description,
+  status = excluded.status,
+  is_featured = excluded.is_featured,
+  launched_at = excluded.launched_at;
+
+insert into public.collection_products (organization_id, collection_id, product_id, sort_order)
+select organizations.id, collections.id, products.id,
+  row_number() over (order by products.created_at)::integer - 1
+from public.organizations
+join public.collections on collections.organization_id = organizations.id
+join public.products on products.organization_id = organizations.id
+where organizations.slug = 'borbogata'
+  and collections.slug = 'colecao-borbogata'
+on conflict (collection_id, product_id) do update set
+  sort_order = excluded.sort_order;
