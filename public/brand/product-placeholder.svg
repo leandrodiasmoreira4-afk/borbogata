@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-labelledby="title description">
+  <title id="title">Imagem de produto Borbogata</title>
+  <desc id="description">Espaço reservado para a fotografia do produto.</desc>
+  <rect width="800" height="1000" fill="#f4eee9"/>
+  <circle cx="400" cy="440" r="190" fill="#5a2b5b" opacity="0.08"/>
+  <path d="M400 285c-74 49-116 122-116 205 0 98 51 173 116 225 65-52 116-127 116-225 0-83-42-156-116-205Z" fill="none" stroke="#5a2b5b" stroke-width="12"/>
+  <path d="M400 345v310M330 455c43 12 70 36 70 75M470 455c-43 12-70 36-70 75" fill="none" stroke="#cbdd71" stroke-linecap="round" stroke-width="10"/>
+  <text x="400" y="790" fill="#5a2b5b" font-family="Georgia, serif" font-size="52" text-anchor="middle">Borbogata</text>
+  <text x="400" y="840" fill="#775f70" font-family="Arial, sans-serif" font-size="20" letter-spacing="5" text-anchor="middle">FOTO EM BREVE</text>
+</svg>

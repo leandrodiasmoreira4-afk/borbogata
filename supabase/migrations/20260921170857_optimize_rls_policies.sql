@@ -1,5 +1,12 @@
-drop policy members_read_own on public.organization_members;
-drop policy members_admin_all on public.organization_members;
+-- Keep this historical migration safe for clean database rebuilds. The base
+-- migration already contains the optimized policy names in newer checkouts,
+-- while older deployed databases may still contain the legacy names.
+drop policy if exists members_read_own on public.organization_members;
+drop policy if exists members_admin_all on public.organization_members;
+drop policy if exists members_read on public.organization_members;
+drop policy if exists members_admin_insert on public.organization_members;
+drop policy if exists members_admin_update on public.organization_members;
+drop policy if exists members_admin_delete on public.organization_members;
 create policy members_read on public.organization_members for select to authenticated
   using (user_id = (select auth.uid()) or private.is_org_admin(organization_id));
 create policy members_admin_insert on public.organization_members for insert to authenticated

@@ -1,12 +1,104 @@
 "use client";
 
 import { ShoppingBag } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-type CartItem={slug:string;size:string;color:string;quantity:number};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { addVariantToCart, parseStoredCart } from "../../lib/cart/model";
+import {
+  findAvailableVariant,
+  firstAvailableVariant,
+  sizesAvailableForColor,
+  uniqueVariantColors,
+  uniqueVariantSizes,
+} from "../../lib/catalog/variants";
+import type { Product } from "../data/products";
 
-export function AddToCart({slug,sizes,colors}:{slug:string;sizes:string[];colors:string[]}) {
-  const [size,setSize]=useState(sizes[0]); const [color,setColor]=useState(colors[0]); const [added,setAdded]=useState(false);
-  const add=useCallback((selection={size,color})=>{const current=JSON.parse(localStorage.getItem("l7-commerce-cart")||"[]") as CartItem[];const i=current.findIndex(x=>x.slug===slug&&x.size===selection.size&&x.color===selection.color);if(i>=0)current[i].quantity+=1;else current.push({slug,size:selection.size,color:selection.color,quantity:1});localStorage.setItem("l7-commerce-cart",JSON.stringify(current));window.dispatchEvent(new Event("cart-updated"));setAdded(true);window.setTimeout(()=>setAdded(false),2200);return {product:slug,size:selection.size,color:selection.color,quantity:1,status:"added"}},[slug,size,color]);
-  useEffect(()=>{const context=(document as unknown as {modelContext?:{registerTool:(tool:unknown,options:{signal:AbortSignal})=>void|Promise<void>}}).modelContext;if(!context?.registerTool)return;const lifecycle=new AbortController();void Promise.resolve(context.registerTool({name:"add_product_to_cart",title:"Adicionar produto ao carrinho",description:"Adiciona este produto ao carrinho usando um tamanho e uma cor disponíveis.",inputSchema:{type:"object",properties:{size:{type:"string",enum:sizes},color:{type:"string",enum:colors}},required:["size","color"],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input:unknown){const value=input as {size?:string;color?:string};if(!value||!sizes.includes(value.size||"")||!colors.includes(value.color||""))throw new Error("Tamanho ou cor inválidos");return add({size:value.size!,color:value.color!})}},{signal:lifecycle.signal})).catch(()=>undefined);return()=>lifecycle.abort()},[add,sizes,colors]);
-  return <div className="buy-box"><fieldset><legend>Tamanho</legend><div className="choice-row">{sizes.map(x=><button type="button" key={x} className={size===x?"choice active":"choice"} onClick={()=>setSize(x)}>{x}</button>)}</div></fieldset><fieldset><legend>Cor</legend><div className="choice-row">{colors.map(x=><button type="button" key={x} className={color===x?"choice active":"choice"} onClick={()=>setColor(x)}>{x}</button>)}</div></fieldset><button className="primary-button full" onClick={()=>add()}><ShoppingBag size={19}/>{added?"Adicionado ao carrinho":"Adicionar ao carrinho"}</button></div>;
+const CART_STORAGE_KEY = "l7-commerce-cart";
+
+export function AddToCart({ product }: { product: Product }) {
+  const firstVariant = useMemo(() => firstAvailableVariant(product.variants), [product.variants]);
+  const [selectedVariantId, setSelectedVariantId] = useState(firstVariant?.id ?? "");
+  const [added, setAdded] = useState(false);
+  const selectedVariant = product.variants.find((variant) => variant.id === selectedVariantId) ?? firstVariant;
+  const colors = useMemo(() => uniqueVariantColors(product.variants), [product.variants]);
+  const sizes = useMemo(() => uniqueVariantSizes(product.variants), [product.variants]);
+  const selectedColor = selectedVariant?.color ?? colors[0] ?? "";
+  const availableSizes = sizesAvailableForColor(product.variants, selectedColor);
+
+  const selectColor = useCallback((color: string) => {
+    const sameSize = selectedVariant
+      ? findAvailableVariant(product.variants, color, selectedVariant.size)
+      : undefined;
+    const next = sameSize ?? product.variants.find((variant) => variant.color === color && variant.stock > 0);
+    if (next) setSelectedVariantId(next.id);
+  }, [product.variants, selectedVariant]);
+
+  const selectSize = useCallback((size: string) => {
+    const next = findAvailableVariant(product.variants, selectedColor, size);
+    if (next) setSelectedVariantId(next.id);
+  }, [product.variants, selectedColor]);
+
+  const add = useCallback((variantId = selectedVariant?.id) => {
+    const variant = product.variants.find((candidate) => candidate.id === variantId && candidate.stock > 0);
+    if (!variant) throw new Error("Variação indisponível");
+    const current = parseStoredCart(localStorage.getItem(CART_STORAGE_KEY));
+    const next = addVariantToCart(current, product, variant);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event("cart-updated"));
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 2200);
+    return {
+      product: product.slug,
+      variantId: variant.id,
+      size: variant.size,
+      color: variant.color,
+      quantity: 1,
+      status: "added",
+    };
+  }, [product, selectedVariant]);
+
+  useEffect(() => {
+    const context = (document as unknown as { modelContext?: { registerTool: (tool: unknown, options: { signal: AbortSignal }) => void | Promise<void> } }).modelContext;
+    if (!context?.registerTool) return;
+    const lifecycle = new AbortController();
+    void Promise.resolve(context.registerTool({
+      name: "add_product_to_cart",
+      title: "Adicionar produto ao carrinho",
+      description: "Adiciona uma variação disponível deste produto ao carrinho.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          size: { type: "string", enum: sizes },
+          color: { type: "string", enum: colors },
+        },
+        required: ["size", "color"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, untrustedContentHint: false },
+      execute(input: unknown) {
+        const value = input as { size?: string; color?: string };
+        const variant = findAvailableVariant(product.variants, value?.color ?? "", value?.size ?? "");
+        if (!variant) throw new Error("Esta combinação de tamanho e cor está indisponível");
+        return add(variant.id);
+      },
+    }, { signal: lifecycle.signal })).catch(() => undefined);
+    return () => lifecycle.abort();
+  }, [add, colors, product.variants, sizes]);
+
+  return <div className="buy-box">
+    <fieldset>
+      <legend>Cor</legend>
+      <div className="choice-row">{colors.map((color) => {
+        const available = product.variants.some((variant) => variant.color === color && variant.stock > 0);
+        return <button type="button" key={color} className={selectedColor === color ? "choice active" : "choice"} disabled={!available} onClick={() => selectColor(color)}>{color}</button>;
+      })}</div>
+    </fieldset>
+    <fieldset>
+      <legend>Tamanho</legend>
+      <div className="choice-row">{sizes.map((size) => <button type="button" key={size} className={selectedVariant?.size === size ? "choice active" : "choice"} disabled={!availableSizes.has(size)} onClick={() => selectSize(size)}>{size}</button>)}</div>
+    </fieldset>
+    <button className="primary-button full" disabled={!selectedVariant} onClick={() => add()}>
+      <ShoppingBag size={19} />
+      {!selectedVariant ? "Produto esgotado" : added ? "Adicionado ao carrinho" : "Adicionar ao carrinho"}
+    </button>
+  </div>;
 }

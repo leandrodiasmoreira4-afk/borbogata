@@ -1,6 +1,12 @@
-import { products as demoProducts, type Product } from "../../app/data/products";
+import {
+  products as demoProducts,
+  type Product,
+  type ProductImage,
+  type ProductVariant,
+} from "../../app/data/products";
 import { storeConfig } from "../../app/config/store";
 import { createSupabasePublicClient } from "../supabase/public";
+import { availableStock } from "../inventory/model";
 
 type CatalogRow = {
   slug: string;
@@ -8,11 +14,21 @@ type CatalogRow = {
   description: string | null;
   categories: { name: string } | null;
   product_variants: Array<{
+    id: string;
+    sku: string;
+    name: string;
     color: string | null;
     size: string | null;
     price_cents: number;
     compare_at_cents: number | null;
     stock_quantity: number;
+    reserved_quantity: number;
+    is_active: boolean;
+  }>;
+  product_images: Array<{
+    storage_path: string;
+    alt_text: string;
+    sort_order: number;
   }>;
 };
 
@@ -73,7 +89,7 @@ export async function getCatalog(): Promise<CatalogResult> {
 
   const { data, error } = await supabase
     .from("products")
-    .select("slug,name,description,categories(name),product_variants(color,size,price_cents,compare_at_cents,stock_quantity)")
+    .select("slug,name,description,categories(name),product_variants(id,sku,name,color,size,price_cents,compare_at_cents,stock_quantity,reserved_quantity,is_active),product_images(storage_path,alt_text,sort_order)")
     .eq("organization_id", organization.id)
     .eq("status", "active")
     .order("created_at", { ascending: false });
@@ -82,22 +98,43 @@ export async function getCatalog(): Promise<CatalogResult> {
 
   const rows = (data || []) as unknown as CatalogRow[];
   const products = rows.flatMap((row): Product[] => {
-    const variants = row.product_variants || [];
-    const available = variants.filter((variant) => variant.stock_quantity > 0);
+    const variants: ProductVariant[] = (row.product_variants || [])
+      .filter((variant) => variant.is_active)
+      .map((variant) => ({
+        id: variant.id,
+        sku: variant.sku,
+        name: variant.name,
+        color: variant.color || "Padrão",
+        size: variant.size || "Único",
+        price: variant.price_cents / 100,
+        compareAt: variant.compare_at_cents ? variant.compare_at_cents / 100 : undefined,
+        stock: availableStock(variant.stock_quantity, variant.reserved_quantity),
+      }));
+    const available = variants.filter((variant) => variant.stock > 0);
     const priceSource = available.length ? available : variants;
     if (!priceSource.length) return [];
-    const lowest = priceSource.reduce((current, variant) => variant.price_cents < current.price_cents ? variant : current);
+    const lowest = priceSource.reduce((current, variant) => variant.price < current.price ? variant : current);
+    const images: ProductImage[] = (row.product_images || [])
+      .sort((first, second) => first.sort_order - second.sort_order)
+      .map((image) => ({
+        url: supabase.storage.from("product-images").getPublicUrl(image.storage_path).data.publicUrl,
+        alt: image.alt_text || row.name,
+        sortOrder: image.sort_order,
+      }));
+    const primaryImage = images[0]?.url || "/brand/product-placeholder.svg";
     return [{
       slug: row.slug,
       name: row.name,
       category: row.categories?.name || "Coleção",
-      price: lowest.price_cents / 100,
-      compareAt: lowest.compare_at_cents ? lowest.compare_at_cents / 100 : undefined,
-      image: demoProducts.find((item) => item.slug === row.slug)?.image || "/products/vestido-luna.png",
+      price: lowest.price,
+      compareAt: lowest.compareAt,
+      image: primaryImage,
+      images: images.length ? images : [{ url: primaryImage, alt: row.name, sortOrder: 0 }],
       description: row.description || "",
-      sizes: [...new Set(variants.map((variant) => variant.size).filter((value): value is string => Boolean(value)))],
-      colors: [...new Set(variants.map((variant) => variant.color).filter((value): value is string => Boolean(value)))],
-      stock: variants.reduce((total, variant) => total + variant.stock_quantity, 0),
+      variants,
+      sizes: [...new Set(variants.map((variant) => variant.size))],
+      colors: [...new Set(variants.map((variant) => variant.color))],
+      stock: variants.reduce((total, variant) => total + variant.stock, 0),
     }];
   });
 
