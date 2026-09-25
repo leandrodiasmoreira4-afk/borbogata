@@ -14,6 +14,7 @@ export const storeConfig = {
     lime: "#cbdd71",
   },
   shippingOrigin: "Salvador, BA",
+  shipping: { correiosPostingMode: "manual-personal" },
   installments: 3,
   organizationSlug: process.env.NEXT_PUBLIC_STORE_SLUG || "borbogata",
   demoMode: !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,

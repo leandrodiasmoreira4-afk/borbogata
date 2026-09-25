@@ -54,6 +54,7 @@ export function CheckoutClient() {
       ...(delivery === "pickup" ? {} : {
         postalCode: field("postalCode"), street: field("street"), number: field("number"),
         complement: field("complement"), district: field("district"), city: field("city"), state: field("state"),
+        ...(delivery === "correios" ? { recipientName: field("recipientName"), recipientDocument: field("recipientDocument") } : {}),
       }),
     };
     const validationError = validateCheckoutDetails(details);
@@ -91,7 +92,12 @@ export function CheckoutClient() {
           <label>Bairro<input name="district" required/></label>
           <label>Cidade<input name="city" autoComplete="address-level2" required/></label>
           <label>UF<input name="state" autoComplete="address-level1" maxLength={2} placeholder="BA" required/></label>
+          {delivery === "correios" && <>
+            <label>Nome do destinatário, se diferente do comprador<input name="recipientName" autoComplete="shipping name" placeholder="Opcional"/></label>
+            <label>CPF do destinatário<input name="recipientDocument" inputMode="numeric" maxLength={14} placeholder="000.000.000-00" required/></label>
+          </>}
         </div>
+        {delivery === "correios" && <p className="checkout-muted">O CPF será necessário para a documentação da postagem. A loja preparará a encomenda e a pré-postagem após a confirmação do pagamento.</p>}
       </>}
       {detailsError && <p className="form-error" role="alert">{detailsError}</p>}
       {reviewed && <p className="checkout-reviewed" role="status">Dados conferidos nesta prévia. O envio do pedido ficará disponível após a integração do pagamento.</p>}

@@ -149,7 +149,7 @@ function NewCollectionForm({organizationId,products,onCreated}:{organizationId:s
   </form>;
 }
 
-function OrdersPanel({orders}:{orders:AdminOrder[]}){return <><div className="admin-heading"><div><p>Acompanhe as vendas da loja</p><h1>Pedidos</h1></div></div><OrdersTable orders={orders}/></>}
+function OrdersPanel({orders}:{orders:AdminOrder[]}){return <><div className="admin-heading"><div><p>Acompanhe as vendas da loja</p><h1>Pedidos</h1></div></div>{storeConfig.shipping.correiosPostingMode==="manual-personal"&&<div className="collection-admin-tip"><PackageOpen/>Envios pelos Correios: após confirmar o pagamento, embale a peça, faça a pré-postagem como pessoa física e guarde o código de rastreio para informar ao cliente.</div>}<OrdersTable orders={orders}/></>}
 function formatAdminDate(value:string){return new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${value}T00:00:00Z`))}
 function slugify(value:string){return value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
 function translateStatus(status:string){return ({active:"Ativo",draft:"Rascunho",archived:"Arquivado",pending:"Pendente",confirmed:"Confirmado",processing:"Separando",shipped:"Enviado",delivered:"Entregue",cancelled:"Cancelado"} as Record<string,string>)[status]||status}
