@@ -11,6 +11,7 @@ export default async function Home() {
   const catalog = await getCatalog();
   const collectionResult = await getCollections(catalog);
   const featured = collectionResult.featured;
+  const publishedCollection = collectionResult.source === "database" ? featured : null;
   const featuredProducts = featured?.products.length ? featured.products : catalog.products;
   const olderCollections = collectionResult.collections.filter((collection) => collection.id !== featured?.id);
 
@@ -19,14 +20,23 @@ export default async function Home() {
     <main>
       <section className="hero collection-hero">
         <div className="hero-image">
-          <Image src={featured?.coverImage || "/products/macacao-noir.png"} alt={featured?.name || "Coleção Borbogata"} fill priority sizes="100vw" />
+          <Image src={publishedCollection?.coverImage || "/campaign/borbo-mare-azul-mar.webp"} alt={publishedCollection?.name || "Campanha Borbo Maré Azul, com modelo à beira-mar"} fill priority sizes="100vw" />
         </div>
         <div className="hero-overlay" />
         <div className="hero-content">
-          <p>{featured ? "Nova coleção" : "Borbogata · Moda feminina"}</p>
-          <h1>{featured?.name || <>Ousada.<br /><em>Sem limites.</em></>}</h1>
-          <span>{featured?.description || "Moda para quem vive intensamente, acompanha as tendências e não tem medo de se destacar."}</span>
-          <Link href="#colecao-atual" className="light-button">Ver a coleção <ArrowRight size={18} /></Link>
+          <p>{publishedCollection ? "Nova coleção" : "Borbogata · Campanha"}</p>
+          <h1>{publishedCollection?.name || <>Borbo<br /><em>Maré Azul.</em></>}</h1>
+          <span>{publishedCollection?.description || "Conheça as imagens da campanha."}</span>
+          <Link href={publishedCollection ? "#colecao-atual" : "#campanha"} className="light-button">{publishedCollection ? "Ver a coleção" : "Ver campanha"} <ArrowRight size={18} /></Link>
+        </div>
+      </section>
+
+      <section className="campaign-section" id="campanha" aria-labelledby="campaign-title">
+        <div className="section-heading"><div><p>Editorial Borbogata</p><h2 id="campaign-title">Borbo Maré Azul</h2></div><span>Imagens da campanha · produtos a cadastrar</span></div>
+        <div className="campaign-grid">
+          <div><Image src="/campaign/borbo-mare-azul-look-1.webp" alt="Look azul da campanha, visto de frente" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-look-2.webp" alt="Look azul da campanha em ambiente externo" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-look-3.webp" alt="Look azul da campanha com conjunto sem mangas" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
         </div>
       </section>
 
@@ -61,8 +71,8 @@ export default async function Home() {
       </section>}
 
       <section className="editorial">
-        <div className="editorial-image"><Image src="/products/bolsa-aurora.png" alt="Acessórios Borbogata" fill sizes="(max-width: 800px) 100vw, 50vw" /></div>
-        <div className="editorial-copy"><p>Acessórios</p><h2>Seu estilo cria<br />o próprio caminho.</h2><span>Detalhes marcantes e combinações feitas para mulheres autênticas, confiantes e prontas para brilhar.</span><Link href="/produtos" className="outline-button">Explorar acessórios</Link></div>
+        <div className="editorial-image"><Image src="/campaign/borbo-mare-azul-campanha.webp" alt="Três modelos com looks da campanha Borbo Maré Azul" fill sizes="(max-width: 800px) 100vw, 50vw" /></div>
+        <div className="editorial-copy"><p>Borbo Maré Azul</p><h2>Uma campanha,<br />muitos jeitos de vestir.</h2><span>Veja mais registros da campanha no Instagram da Borbogata.</span><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer" className="outline-button">Ver no Instagram</a></div>
       </section>
     </main>
     <footer className="store-footer"><div className="footer-brand"><BrandLogo variant="lime" className="footer-logo" /></div><p>Moda feminina para quem é ousada, autêntica e sem limites.</p><div><Link href="/produtos">Coleções</Link><Link href="/carrinho">Meu carrinho</Link><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer">Instagram</a><Link href="/admin">Painel da loja</Link></div><small>© 2026 {storeConfig.name}. Tecnologia {storeConfig.platform}.</small></footer>
