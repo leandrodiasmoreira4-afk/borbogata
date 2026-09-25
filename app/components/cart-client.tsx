@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShieldCheck, ShoppingBag, Trash2, Truck } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { parseStoredCart, resolveCartItem, type CartItem } from "../../lib/cart/model";
 import { formatBRL, products as demoProducts, type Product } from "../data/products";
@@ -12,9 +12,6 @@ const CART_STORAGE_KEY = "l7-commerce-cart";
 export function CartClient(){
   const [items,setItems]=useState<CartItem[]>([]);
   const [catalogProducts,setCatalogProducts]=useState<Product[]>(demoProducts);
-  const [cep,setCep]=useState("");
-  const [shipping,setShipping]=useState<number|null>(null);
-  const [loading,setLoading]=useState(false);
 
   useEffect(()=>{
     const timer=window.setTimeout(()=>setItems(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY))),0);
@@ -50,12 +47,6 @@ export function CartClient(){
     save(items.map((item,itemIndex)=>itemIndex===index?{...resolved.item,quantity:nextQuantity}:item));
   }
 
-  function calculateShipping(){
-    if(cep.replace(/\D/g,"").length!==8)return;
-    setLoading(true);
-    window.setTimeout(()=>{setShipping(18.9);setLoading(false)},650);
-  }
-
   if(!items.length)return <div className="empty-cart"><span className="empty-icon"><ShoppingBag/></span><h2>Seu carrinho está vazio</h2><p>Escolha suas peças favoritas e volte aqui para finalizar.</p><Link className="primary-button" href="/produtos">Ver coleção</Link></div>;
 
   return <div className="cart-grid">
@@ -78,15 +69,9 @@ export function CartClient(){
     <aside className="order-summary">
       <h2>Resumo do pedido</h2>
       <div className="summary-line"><span>Subtotal</span><strong>{formatBRL(subtotal)}</strong></div>
-      <div className="shipping-box">
-        <label htmlFor="cep">Calcular entrega</label>
-        <div><input id="cep" inputMode="numeric" placeholder="00000-000" value={cep} onChange={event=>setCep(event.target.value)}/><button type="button" onClick={calculateShipping}>{loading?"...":"Calcular"}</button></div>
-        {shipping!==null&&<p><Truck size={16}/> PAC · 5 a 8 dias úteis <strong>{formatBRL(shipping)}</strong></p>}
-      </div>
-      <div className="summary-total"><span>Total</span><strong>{formatBRL(subtotal+(shipping||0))}</strong></div>
-      <button type="button" className="primary-button full" disabled={shipping===null||unavailableCount>0||!lines.length}>Ir para o checkout</button>
-      <small className="secure"><ShieldCheck size={15}/> Ambiente seguro · pagamento protegido</small>
-      <small className="demo-note">Frete e checkout em modo demonstração</small>
+      <p className="checkout-muted">A entrega será definida na próxima etapa. Nenhuma cobrança será feita.</p>
+      <div className="summary-total"><span>Subtotal das peças</span><strong>{formatBRL(subtotal)}</strong></div>
+      {unavailableCount===0&&lines.length>0?<Link className="primary-button full" href="/checkout">Continuar</Link>:<button type="button" className="primary-button full" disabled>Revise o carrinho</button>}
     </aside>
   </div>;
 }
