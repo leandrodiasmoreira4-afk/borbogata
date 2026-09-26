@@ -18,27 +18,34 @@ export default async function Home() {
   return <>
     <StoreHeader />
     <main>
-      <section className="hero collection-hero">
+      {publishedCollection ? <section className="hero collection-hero">
         <div className="hero-image">
-          <Image src={publishedCollection?.coverImage || "/campaign/borbo-mare-azul-mar.webp"} alt={publishedCollection?.name || "Campanha Borbo Maré Azul, com modelo à beira-mar"} fill priority sizes="100vw" />
+          <Image src={publishedCollection.coverImage} alt={publishedCollection.name} fill priority sizes="100vw" />
         </div>
         <div className="hero-overlay" />
         <div className="hero-content">
-          <p>{publishedCollection ? "Nova coleção" : "Borbogata · Campanha"}</p>
-          <h1>{publishedCollection?.name || <>Borbo<br /><em>Maré Azul.</em></>}</h1>
-          <span>{publishedCollection?.description || "Conheça as imagens da campanha."}</span>
-          <Link href={publishedCollection ? "#colecao-atual" : "#campanha"} className="light-button">{publishedCollection ? "Ver a coleção" : "Ver campanha"} <ArrowRight size={18} /></Link>
+          <p>Nova coleção</p>
+          <h1>{publishedCollection.name}</h1>
+          <span>{publishedCollection.description}</span>
+          <Link href="#colecao-atual" className="light-button">Ver a coleção <ArrowRight size={18} /></Link>
         </div>
-      </section>
+      </section> : <section className="collection-launch" aria-labelledby="collection-launch-title">
+        <div className="collection-launch-frames" aria-label="Sequência de três imagens de lançamento da coleção Borbo Maré Azul">
+          <div><Image src="/campaign/borbo-mare-azul-abertura-17.webp" alt="Primeira imagem: detalhe do rosto da modelo" fill priority sizes="(max-width: 680px) 82vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-abertura-18.webp" alt="Segunda imagem: detalhe do cabelo e acessórios dourados" fill priority sizes="(max-width: 680px) 82vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-abertura-19.webp" alt="Terceira imagem: anúncio Borbo Maré Azul" fill priority sizes="(max-width: 680px) 82vw, 33vw" /></div>
+        </div>
+        <div className="collection-launch-caption"><div><p>Nova coleção</p><h1 id="collection-launch-title">Borbo Maré Azul</h1></div><Link href="#colecao-fotos" className="light-button">Conhecer a coleção <ArrowRight size={18} /></Link></div>
+      </section>}
 
-      <section className="campaign-section" id="campanha" aria-labelledby="campaign-title">
-        <div className="section-heading"><div><p>Editorial Borbogata</p><h2 id="campaign-title">Borbo Maré Azul</h2></div><span>Imagens da campanha · produtos a cadastrar</span></div>
+      {!publishedCollection && <section className="campaign-section" id="colecao-fotos" aria-labelledby="collection-photos-title">
+        <div className="section-heading"><div><p>Nova coleção</p><h2 id="collection-photos-title">Borbo Maré Azul</h2></div><span>Fotos da coleção · peças a cadastrar</span></div>
         <div className="campaign-grid">
-          <div><Image src="/campaign/borbo-mare-azul-look-1.webp" alt="Look azul da campanha, visto de frente" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
-          <div><Image src="/campaign/borbo-mare-azul-look-2.webp" alt="Look azul da campanha em ambiente externo" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
-          <div><Image src="/campaign/borbo-mare-azul-look-3.webp" alt="Look azul da campanha com conjunto sem mangas" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-look-1.webp" alt="Look azul da coleção, visto de frente" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-look-2.webp" alt="Look azul da coleção em ambiente externo" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
+          <div><Image src="/campaign/borbo-mare-azul-look-3.webp" alt="Look azul da coleção com conjunto sem mangas" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
         </div>
-      </section>
+      </section>}
 
       <section className="benefits">
         <div><Truck /><span><strong>Enviamos para todo Brasil</strong><small>Frete calculado pelo CEP</small></span></div>
@@ -48,11 +55,12 @@ export default async function Home() {
 
       <section className="collection-section" id="colecao-atual">
         <div className="section-heading">
-          <div><p>Coleção atual</p><h2>{featured?.name || "Peças que você vai amar"}</h2></div>
-          {featured
-            ? <Link href={`/colecao/${featured.slug}`}>Ver coleção completa <ArrowRight size={17} /></Link>
+          <div><p>{publishedCollection ? "Coleção atual" : "Teste a vitrine"}</p><h2>{publishedCollection?.name || "Vitrine de demonstração"}</h2></div>
+          {publishedCollection
+            ? <Link href={`/colecao/${publishedCollection.slug}`}>Ver coleção completa <ArrowRight size={17} /></Link>
             : <Link href="/produtos">Ver catálogo completo <ArrowRight size={17} /></Link>}
         </div>
+        {!publishedCollection && <p className="demo-catalog-note">Estes produtos e preços são exemplos para testar variações, carrinho e a prévia do checkout. As peças da coleção Borbo Maré Azul serão cadastradas com dados reais.</p>}
         {catalog.error || collectionResult.error
           ? <p className="catalog-error">{catalog.error || collectionResult.error}</p>
           : <div className="product-grid">{featuredProducts.map((product) => <ProductCard key={product.slug} product={product} />)}</div>}
@@ -71,8 +79,8 @@ export default async function Home() {
       </section>}
 
       <section className="editorial">
-        <div className="editorial-image"><Image src="/campaign/borbo-mare-azul-campanha.webp" alt="Três modelos com looks da campanha Borbo Maré Azul" fill sizes="(max-width: 800px) 100vw, 50vw" /></div>
-        <div className="editorial-copy"><p>Borbo Maré Azul</p><h2>Uma campanha,<br />muitos jeitos de vestir.</h2><span>Veja mais registros da campanha no Instagram da Borbogata.</span><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer" className="outline-button">Ver no Instagram</a></div>
+        <div className="editorial-image"><Image src="/campaign/borbo-mare-azul-campanha.webp" alt="Três modelos com looks da coleção Borbo Maré Azul" fill sizes="(max-width: 800px) 100vw, 50vw" /></div>
+        <div className="editorial-copy"><p>Borbo Maré Azul</p><h2>Uma coleção,<br />muitos jeitos de vestir.</h2><span>Veja mais registros da coleção no Instagram da Borbogata.</span><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer" className="outline-button">Ver no Instagram</a></div>
       </section>
     </main>
     <footer className="store-footer"><div className="footer-brand"><BrandLogo variant="lime" className="footer-logo" /></div><p>Moda feminina para quem é ousada, autêntica e sem limites.</p><div><Link href="/produtos">Coleções</Link><Link href="/carrinho">Meu carrinho</Link><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer">Instagram</a><Link href="/admin">Painel da loja</Link></div><small>© 2026 {storeConfig.name}. Tecnologia {storeConfig.platform}.</small></footer>
