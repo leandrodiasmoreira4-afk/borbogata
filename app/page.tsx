@@ -12,34 +12,69 @@ export default async function Home() {
   const collectionResult = await getCollections(catalog);
   const featured = collectionResult.featured;
   const publishedCollection = collectionResult.source === "database" ? featured : null;
+  const heroCollectionName = publishedCollection?.name || "Borbo Maré Azul";
   const featuredProducts = publishedCollection ? publishedCollection.products : catalog.products;
   const olderCollections = collectionResult.collections.filter((collection) => collection.id !== featured?.id);
 
   return <>
     <StoreHeader />
     <main>
-      <section className="fashion-hero" aria-labelledby="collection-launch-title">
-        <div className="fashion-hero-copy">
-          <p>Nova coleção</p>
-          <h1 id="collection-launch-title">{publishedCollection?.name || "Borbo Maré Azul"}</h1>
-          {publishedCollection?.description && <span>{publishedCollection.description}</span>}
-          <Link href={publishedCollection ? `/colecao/${publishedCollection.slug}` : "#colecao-fotos"} className="fashion-cta">Explorar coleção <ArrowRight size={18} /></Link>
-          {!publishedCollection && <small>Prévia visual · peças da coleção ainda não cadastradas</small>}
+      <section className="collection-hero" aria-labelledby="collection-launch-title">
+        <div className="collection-hero-copy">
+          <p className="collection-hero-kicker">Nova coleção</p>
+          <h1 id="collection-launch-title">{heroCollectionName}</h1>
+          <p className="collection-hero-description">
+            {publishedCollection?.description ||
+              "Conheça os primeiros looks da nova coleção nas fotos oficiais da Borbogata."}
+          </p>
+          <Link
+            href={publishedCollection ? `/colecao/${publishedCollection.slug}` : "#colecao-atual"}
+            className="collection-hero-cta"
+          >
+            Ver coleção <ArrowRight size={17} aria-hidden="true" />
+          </Link>
+          {!publishedCollection && (
+            <small>Prévia visual · peças e valores serão cadastrados em breve</small>
+          )}
         </div>
-        <div className="fashion-hero-photos">
-          <div className="fashion-photo-main"><Image src={publishedCollection?.coverImage || "/campaign/borbo-mare-azul-look-1.webp"} alt={publishedCollection?.name || "Look completo azul da coleção Borbo Maré Azul"} fill priority sizes="(max-width: 760px) 100vw, 38vw" /></div>
-          {!publishedCollection && <div className="fashion-photo-secondary"><Image src="/campaign/borbo-mare-azul-look-3.webp" alt="Segundo look completo da coleção Borbo Maré Azul" fill sizes="24vw" /></div>}
+
+        <div className="collection-hero-gallery" aria-label={`Editorial ${heroCollectionName}`}>
+          <figure className="collection-hero-main">
+            <Image
+              src={publishedCollection?.coverImage || "/campaign/borbo-mare-azul-look-2.webp"}
+              alt={publishedCollection
+                ? `Look da coleção ${heroCollectionName}`
+                : "Look jeans azul da coleção Borbo Maré Azul"}
+              fill
+              priority
+              sizes={publishedCollection
+                ? "(max-width: 680px) 74vw, (max-width: 900px) 58vw, 64vw"
+                : "(max-width: 680px) 74vw, (max-width: 900px) 58vw, 25vw"}
+            />
+          </figure>
+          {!publishedCollection && (
+            <div className="collection-hero-pair">
+              <figure>
+                <Image
+                  src="/campaign/borbo-mare-azul-look-1.webp"
+                  alt="Conjunto azul estampado da coleção Borbo Maré Azul"
+                  fill
+                  priority
+                  sizes="(max-width: 680px) 74vw, 19vw"
+                />
+              </figure>
+              <figure>
+                <Image
+                  src="/campaign/borbo-mare-azul-look-3.webp"
+                  alt="Look azul sem mangas da coleção Borbo Maré Azul"
+                  fill
+                  sizes="(max-width: 680px) 74vw, 19vw"
+                />
+              </figure>
+            </div>
+          )}
         </div>
       </section>
-
-      {!publishedCollection && <section className="campaign-section" id="colecao-fotos" aria-labelledby="collection-photos-title">
-        <div className="section-heading"><div><p>Nova coleção</p><h2 id="collection-photos-title">Borbo Maré Azul</h2></div><span>Fotos da coleção · peças a cadastrar</span></div>
-        <div className="campaign-grid">
-          <div><Image src="/campaign/borbo-mare-azul-look-1.webp" alt="Look azul da coleção, visto de frente" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
-          <div><Image src="/campaign/borbo-mare-azul-look-2.webp" alt="Look azul da coleção em ambiente externo" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
-          <div><Image src="/campaign/borbo-mare-azul-look-3.webp" alt="Look azul da coleção com conjunto sem mangas" fill sizes="(max-width: 680px) 90vw, 33vw" /></div>
-        </div>
-      </section>}
 
       <section className="collection-section" id="colecao-atual">
         <div className="section-heading">
