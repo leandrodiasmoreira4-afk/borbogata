@@ -37,3 +37,34 @@
 .checkout-detail{display:block;margin-top:.3rem;font-size:.75rem;color:var(--muted)}
 .order-summary .primary-button.full{display:block;text-align:center;width:100%}
 @media(max-width:680px){.checkout-fields{grid-template-columns:1fr}.checkout-delivery label{flex-wrap:wrap}.checkout-delivery label span{width:100%;text-align:left;margin-left:1.6rem}}
+
+/* Borbogata: editorial storefront */
+:root{--wine:#451043;--wine-dark:#351032;--lime:#e6ca72;--cream:#f8f5f0;--line:#e9e1e5;--primary:#451043;--secondary:#e6ca72}
+.demo-banner{min-height:23px;background:#f5eff1;color:#684763;font-size:.65rem;font-weight:500;letter-spacing:.01em}
+.store-header{height:74px;grid-template-columns:220px 1fr auto;gap:2rem;background:#fff}
+.store-header .brand{width:198px;height:58px;position:relative;overflow:hidden;background:#451043;border-radius:2px}
+.official-logo{display:inline-block;position:relative;overflow:hidden;background:#451043}
+.brand-logo{width:198px;height:58px}.brand-logo img{position:absolute;width:226px;height:226px;max-width:none;left:-14px;top:-89px}
+.mobile-brand-logo{width:198px;height:58px}.mobile-brand-logo img{position:absolute;width:226px;height:226px;max-width:none;left:-14px;top:-89px}
+.desktop-nav{justify-content:center;gap:clamp(.8rem,2vw,2rem)}
+.fashion-hero{width:min(1440px,100%);margin:auto;min-height:490px;max-height:640px;display:grid;grid-template-columns:37% 63%;background:#f8f5f0;overflow:hidden}
+.fashion-hero-copy{padding:clamp(2rem,5vw,5.5rem);display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.fashion-hero-copy>p{color:var(--wine);font-size:.72rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;margin:0 0 1.2rem}
+.fashion-hero-copy h1{font:400 clamp(3.4rem,5.5vw,6.2rem)/.99 Georgia,serif;letter-spacing:-.055em;color:#371935;margin:0 0 1.5rem}
+.fashion-hero-copy>span{font:1rem/1.5 Georgia,serif;color:#534551;margin:0 0 1.3rem}
+.fashion-hero-copy>small{color:#786a73;font-size:.72rem;line-height:1.4;margin-top:1rem}
+.fashion-cta{display:inline-flex;align-items:center;justify-content:center;gap:.8rem;min-height:49px;padding:0 1.4rem;background:var(--wine);color:#fff;font-size:.77rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.fashion-cta:hover{background:#62265e}
+.fashion-hero-photos{display:flex;gap:8px;padding:8px 8px 8px 0;min-width:0;height:100%}
+.fashion-hero-photos>div{position:relative;overflow:hidden;background:#e7e1df}.fashion-photo-main{flex:1.5}.fashion-photo-secondary{flex:1}
+.fashion-hero-photos img{object-fit:contain;background:#ece8e6}.fashion-photo-main img{object-position:center center}
+.collection-section{padding:3.5rem 0 4rem}.campaign-section{margin:1rem auto 3.5rem}.campaign-section .section-heading span{font-size:.76rem}
+.home-categories{width:min(1180px,calc(100% - 2.5rem));margin:0 auto 5rem}.category-links{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.category-links a{min-height:110px;padding:1.5rem;display:flex;align-items:end;justify-content:space-between;background:#f5f0ed;color:var(--wine);font:1.55rem Georgia,serif;transition:background .2s}.category-links a:hover{background:#ebdfeb}
+.benefits{margin:3rem auto;border-top:1px solid var(--line)}.benefits a{text-decoration:underline;text-underline-offset:3px}
+.editorial{min-height:490px;background:#efe9df}.editorial-image{min-height:490px}.editorial-copy>span{color:#554a50}
+.store-footer{background:#351032}.footer-logo{width:230px;height:230px;border-radius:50%}.footer-logo img{width:100%;height:100%;object-fit:contain}
+.catalog-search{max-width:520px;margin:0 auto 1.5rem}.catalog-search label{display:block;font-size:.78rem;margin-bottom:.45rem}.catalog-search>div{display:flex}.catalog-search input{flex:1;min-width:0;min-height:45px;padding:.7rem;border:1px solid var(--line)}.catalog-search button{border:0;background:var(--wine);color:white;padding:0 1.3rem}.catalog-filters{display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap;margin:0 0 2rem}.catalog-filters a{padding:.6rem 1rem;border:1px solid var(--line);font-size:.8rem}.catalog-filters a.active,.catalog-filters a:hover{background:var(--wine);border-color:var(--wine);color:white}
+:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+@media(max-width:900px){.store-header{grid-template-columns:1fr auto 1fr;gap:0}.fashion-hero{grid-template-columns:42% 58%}.fashion-photo-secondary{display:none}}
+@media(max-width:680px){.store-header{height:65px;padding:0 .65rem}.store-header .brand{width:155px;height:48px}.brand-logo{width:155px;height:48px}.brand-logo img{width:182px;height:182px;left:-13px;top:-72px}.header-actions{gap:0}.icon-button{width:36px;height:40px}.fashion-hero{display:flex;flex-direction:column;min-height:0;max-height:none}.fashion-hero-photos{order:0;height:min(94vw,420px);padding:0;display:block}.fashion-photo-main{height:100%}.fashion-photo-main img{object-fit:contain}.fashion-hero-copy{order:1;padding:1.7rem 1.1rem 2rem}.fashion-hero-copy>p{margin-bottom:.65rem}.fashion-hero-copy h1{font-size:clamp(2.8rem,12vw,4rem);margin-bottom:1rem}.fashion-cta{width:100%}.collection-section{padding:2.6rem 0}.home-categories{width:calc(100% - 1.4rem);margin-bottom:3rem}.category-links{grid-template-columns:1fr;gap:.6rem}.category-links a{min-height:78px}.campaign-grid>div{flex-basis:75%}.footer-logo{width:180px;height:180px}.benefits{margin:2rem auto}.catalog-page{padding-top:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
