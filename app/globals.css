@@ -88,3 +88,9 @@
 
 @media(max-width:900px){.collection-hero{grid-template-columns:minmax(270px,.82fr) minmax(0,1.18fr)}.collection-hero-copy{padding:2.5rem 2rem}.collection-hero-copy h1{font-size:clamp(3rem,7vw,4.8rem)}.collection-hero-gallery{grid-template-columns:1fr}.collection-hero-pair{display:none}}
 @media(max-width:680px){.collection-hero{min-height:0;display:flex;flex-direction:column}.collection-hero-gallery{order:0;height:min(108vw,470px);padding:0;display:flex;gap:.5rem;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.collection-hero-gallery::-webkit-scrollbar{display:none}.collection-hero-gallery figure{flex:0 0 76%;min-height:100%;scroll-snap-align:center}.collection-hero-pair{display:contents}.collection-hero-gallery img{object-position:center center}.collection-hero-copy{order:1;padding:2rem 1.15rem 2.2rem}.collection-hero-copy h1{max-width:none;margin-bottom:1rem;font-size:clamp(3rem,14vw,4.35rem)}.collection-hero-description{margin-bottom:1.4rem}.collection-hero-cta{width:100%}}
+
+/* Contato rápido da loja */
+.whatsapp-contact{position:fixed;right:1.35rem;bottom:1.35rem;z-index:50;min-height:54px;padding:0 1.15rem;display:inline-flex;align-items:center;justify-content:center;gap:.6rem;border-radius:999px;background:#167a4a;color:#fff;box-shadow:0 10px 30px #25112530;font-size:.78rem;font-weight:800;letter-spacing:.04em;transition:transform .2s,background .2s,box-shadow .2s}
+.whatsapp-contact:hover{background:#11653d;box-shadow:0 12px 34px #25112545;transform:translateY(-2px)}
+.whatsapp-contact:focus-visible{outline-color:#167a4a;outline-offset:4px}
+@media(max-width:680px){.whatsapp-contact{right:.9rem;bottom:.9rem;width:54px;padding:0}.whatsapp-contact span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}}

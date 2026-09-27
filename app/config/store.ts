@@ -1,8 +1,11 @@
+const support = "+55 71 8439-5835";
+
 export const storeConfig = {
   platform: "L7 Commerce",
   name: "Borbogata",
   domain: "borbogata.com.br",
-  support: "(71) 99999-9999",
+  support,
+  whatsappUrl: `https://wa.me/${support.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Vim pelo site da Borbogata e gostaria de mais informações.")}`,
   instagram: "@borbogata_modas",
   instagramUrl: "https://www.instagram.com/borbogata_modas/",
   address: "Rua Simões Filhos, 13 — Boca do Rio, Salvador — BA",

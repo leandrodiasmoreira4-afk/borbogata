@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
+import { Menu, MessageCircle, Search, ShoppingBag, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { storeConfig } from "../config/store";
 import { BrandLogo } from "./brand-logo";
@@ -26,5 +26,15 @@ export function StoreHeader() {
       <div className="header-actions"><Link href="/produtos" className="icon-button" aria-label="Buscar"><Search size={20}/></Link><Link href="/admin" className="icon-button desktop-icon" aria-label="Painel administrativo"><UserRound size={20}/></Link><Link href="/carrinho" className="icon-button cart-link" aria-label={`Carrinho com ${count} itens`}><ShoppingBag size={20}/>{count>0&&<span className="cart-count">{count}</span>}</Link></div>
     </header>
     {open&&<div className="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu"><div className="mobile-menu-top"><BrandLogo className="mobile-brand-logo"/><button className="icon-button" onClick={()=>setOpen(false)} aria-label="Fechar menu"><X/></button></div><nav><Link href="/produtos" onClick={()=>setOpen(false)}>Novidades</Link><Link href="/produtos" onClick={()=>setOpen(false)}>Vestidos</Link><Link href="/produtos" onClick={()=>setOpen(false)}>Conjuntos</Link><Link href="/produtos" onClick={()=>setOpen(false)}>Acessórios</Link><a href={storeConfig.instagramUrl} target="_blank" rel="noreferrer">Instagram</a><Link href="/admin" onClick={()=>setOpen(false)}>Painel administrativo</Link></nav></div>}
+    <a
+      className="whatsapp-contact"
+      href={storeConfig.whatsappUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Falar com a ${storeConfig.name} pelo WhatsApp no número ${storeConfig.support}`}
+    >
+      <MessageCircle size={22} aria-hidden="true" />
+      <span>Fale conosco</span>
+    </a>
   </>;
 }
