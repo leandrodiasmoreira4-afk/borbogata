@@ -38,7 +38,7 @@ export function BrandHero() {
     try { await video.play(); } catch { setPlaying(false); }
   }
 
-  return <section className="brand-film" aria-labelledby="brand-title">
+  return <section className="brand-film" aria-label="Campanha institucional Borbogata">
     <Image src="/brand/borbogata-poster.jpg" alt="Campanha institucional Borbogata" fill priority sizes="100vw" className="brand-film-poster" />
     <video ref={videoRef} className={ready && !failed ? "brand-film-video is-ready" : "brand-film-video"}
       muted loop playsInline preload="none" poster="/brand/borbogata-poster.jpg" aria-hidden="true"
@@ -46,7 +46,6 @@ export function BrandHero() {
       onError={() => { setFailed(true); setPlaying(false); }} />
     <div className="brand-film-shade" />
     <div className="brand-film-copy">
-      <h1 id="brand-title">Você, ousada<br />e sem limites.</h1>
       <Link href="#novidades" className="brand-film-cta">Ver novidades</Link>
     </div>
     {!failed && <button className="brand-film-control" onClick={toggleVideo} aria-label={playing ? "Pausar vídeo" : "Reproduzir vídeo"}>
