@@ -15,6 +15,7 @@ export type AdminProductVariant = {
   priceCents: number;
   compareAtCents: number | null;
   stock: number;
+  reserved?: number;
 };
 
 export type AdminProductImage = {

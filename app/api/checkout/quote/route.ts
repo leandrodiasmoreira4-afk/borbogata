@@ -1,6 +1,7 @@
 import { getCatalog } from "../../../../lib/catalog/repository";
 import { quoteCart, type DeliveryMethod } from "../../../../lib/checkout/quote";
 import type { CartItem } from "../../../../lib/cart/model";
+import { sandboxCheckoutConfig } from "../../../../lib/checkout/sandbox";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,9 @@ export async function POST(request: Request) {
   if (catalog.error) return Response.json({ error: catalog.error }, { status: 503 });
   try {
     const quote = quoteCart((body as { items: CartItem[] }).items, catalog.products);
-    return Response.json({ ...quote, source: catalog.source, delivery, deliveryFeeCents: delivery === "pickup" ? 0 : null, paymentAvailable: false }, { headers: { "Cache-Control": "no-store" } });
+    let paymentAvailable = false;
+    try { sandboxCheckoutConfig(process.env); paymentAvailable = catalog.source === "database"; } catch { /* Preview remains available. */ }
+    return Response.json({ ...quote, source: catalog.source, delivery, deliveryFeeCents: null, paymentAvailable }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Carrinho inválido." }, { status: 400 });
   }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const moneySchema = z.string().trim().regex(/^\d+(?:[,.]\d{1,2})?$/, "Informe um valor válido.");
+const moneySchema = z.string().trim().regex(/^\d+(?:[,.]\d{1,2})?$/, "Informe um valor válido.")
+  .refine(value => Number.isSafeInteger(toCents(value)) && toCents(value) > 0 && toCents(value) <= 100000000, "Informe um preço entre R$ 0,01 e R$ 1.000.000,00.");
 
 const variantDraftSchema = z.object({
   id: z.string().uuid().optional(),
@@ -10,7 +11,8 @@ const variantDraftSchema = z.object({
   size: z.string().trim().max(40),
   price: moneySchema,
   compareAt: z.string().trim(),
-  stock: z.string().trim().regex(/^\d+$/, "O estoque deve ser um número inteiro."),
+  stock: z.string().trim().regex(/^\d+$/, "O estoque deve ser um número inteiro.")
+    .refine(value => Number.isSafeInteger(Number(value)) && Number(value) <= 2147483647, "Estoque acima do limite permitido."),
 });
 
 const productDraftSchema = z.object({
