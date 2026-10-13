@@ -33,11 +33,11 @@ test("accepts only Mercado Pago checkout redirects", async () => {
   const fetcher: typeof fetch = async (_url, options) => {
     assert.equal(options?.method, "POST");
     assert.equal((options?.headers as Record<string, string>).Authorization, "Bearer token");
-    return Response.json({ id: "pref-1", init_point: "https://www.mercadopago.com.br/checkout/v1/redirect" });
+    return Response.json({ id: "pref-1", sandbox_init_point: "https://sandbox.mercadopago.com.br/checkout/v1/redirect" });
   };
   assert.deepEqual(await createPreference(input, "token", fetcher), {
-    preferenceId: "pref-1", paymentUrl: "https://www.mercadopago.com.br/checkout/v1/redirect",
+    preferenceId: "pref-1", paymentUrl: "https://sandbox.mercadopago.com.br/checkout/v1/redirect",
   });
   await assert.rejects(createPreference(input, "token", async () =>
-    Response.json({ id: "pref-1", init_point: "https://mercadopago.com.br.evil.example/redirect" })), /Destino de pagamento inválido/);
+    Response.json({ id: "pref-1", sandbox_init_point: "https://mercadopago.com.br.evil.example/redirect" })), /Destino de pagamento inválido/);
 });

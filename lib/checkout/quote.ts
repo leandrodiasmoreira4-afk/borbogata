@@ -23,7 +23,10 @@ export function quoteCart(items: CartItem[], products: Product[]) {
     if (quantity > variant.stock) throw new Error("A quantidade solicitada supera o estoque disponível.");
     quantities.set(variant.id, quantity);
     const unitPriceCents = Math.round(variant.price * 100);
+    if (!Number.isSafeInteger(unitPriceCents) || unitPriceCents < 1 || !Number.isSafeInteger(unitPriceCents * item.quantity)) throw new Error("Preço indisponível. Entre em contato com a loja.");
     return { variantId: variant.id, name: product.name, color: variant.color, size: variant.size, quantity: item.quantity, unitPriceCents, totalCents: unitPriceCents * item.quantity };
   });
-  return { lines, subtotalCents: lines.reduce((total, line) => total + line.totalCents, 0) };
+  const subtotalCents = lines.reduce((total, line) => total + line.totalCents, 0);
+  if (!Number.isSafeInteger(subtotalCents)) throw new Error("Valor do carrinho acima do limite.");
+  return { lines, subtotalCents };
 }

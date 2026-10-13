@@ -51,16 +51,20 @@ export async function createPreference(input: PreferenceInput, accessToken: stri
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify(buildPreference(input)),
+    signal: AbortSignal.timeout(10000),
+    redirect: "error",
   });
   if (!response.ok) throw new Error("Não foi possível iniciar o pagamento.");
   const result: unknown = await response.json();
-  if (!result || typeof result !== "object" || !("id" in result) || !("init_point" in result) ||
-      typeof result.id !== "string" || typeof result.init_point !== "string") {
+  const destinationField = "sandbox_init_point";
+  if (!result || typeof result !== "object" || !("id" in result) ||
+      typeof result.id !== "string" || !(destinationField in result)) {
     throw new Error("Resposta de pagamento inválida.");
   }
-  const destination = new URL(result.init_point);
-  if (destination.protocol !== "https:" || !["mercadopago.com", "mercadopago.com.br"].some((host) =>
-    destination.hostname === host || destination.hostname.endsWith(`.${host}`))) {
+  const destinationValue = (result as Record<string, unknown>)[destinationField];
+  if (typeof destinationValue !== "string") throw new Error("Resposta de pagamento inválida.");
+  const destination = new URL(destinationValue);
+  if (destination.protocol !== "https:" || destination.username || destination.password || destination.port || !["sandbox.mercadopago.com", "sandbox.mercadopago.com.br"].includes(destination.hostname)) {
     throw new Error("Destino de pagamento inválido.");
   }
   return { preferenceId: result.id, paymentUrl: destination.toString() };

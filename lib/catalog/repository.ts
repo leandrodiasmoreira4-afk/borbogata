@@ -7,6 +7,7 @@ import {
 import { storeConfig } from "../../app/config/store";
 import { createSupabasePublicClient } from "../supabase/public";
 import { availableStock } from "../inventory/model";
+import { effectivePrice } from "./promotion";
 
 type CatalogRow = {
   slug: string;
@@ -21,6 +22,8 @@ type CatalogRow = {
     size: string | null;
     price_cents: number;
     compare_at_cents: number | null;
+    promotion_starts_at?: string | null;
+    promotion_ends_at?: string | null;
     stock_quantity: number;
     reserved_quantity: number;
     is_active: boolean;
@@ -89,7 +92,7 @@ export async function getCatalog(): Promise<CatalogResult> {
 
   const { data, error } = await supabase
     .from("products")
-    .select("slug,name,description,categories(name),product_variants(id,sku,name,color,size,price_cents,compare_at_cents,stock_quantity,reserved_quantity,is_active),product_images(storage_path,alt_text,sort_order)")
+    .select("slug,name,description,categories(name),product_variants(*),product_images(storage_path,alt_text,sort_order)")
     .eq("organization_id", organization.id)
     .eq("status", "active")
     .order("created_at", { ascending: false });
@@ -106,8 +109,7 @@ export async function getCatalog(): Promise<CatalogResult> {
         name: variant.name,
         color: variant.color || "Padrão",
         size: variant.size || "Único",
-        price: variant.price_cents / 100,
-        compareAt: variant.compare_at_cents ? variant.compare_at_cents / 100 : undefined,
+        ...effectivePrice(variant),
         stock: availableStock(variant.stock_quantity, variant.reserved_quantity),
       }));
     const available = variants.filter((variant) => variant.stock > 0);
