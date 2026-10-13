@@ -5,7 +5,7 @@ import { createSupabaseBrowserClient } from "../../lib/supabase/browser";
 import { formatBRL } from "../data/products";
 import type { AdminProductRecord } from "./admin-product-editor";
 
-export type CommerceTab = "clientes" | "cupons" | "configuracoes" | "relatorios" | "promocoes";
+export type CommerceTab = "cupons" | "configuracoes" | "promocoes";
 type Row = Record<string, string | number | boolean | string[] | null>;
 
 export function AdminCommerce({ tab, organizationId, products }: { tab: CommerceTab; organizationId: string | null; products: AdminProductRecord[] }) {
@@ -18,12 +18,12 @@ export function AdminCommerce({ tab, organizationId, products }: { tab: Commerce
   const [revision, setRevision] = useState(0);
   const [editing, setEditing] = useState<Row | null>(null);
   useEffect(() => {
-    if (!client || !organizationId || tab === "relatorios") return;
+    if (!client || !organizationId) return;
     let cancelled = false;
-    const table = tab === "clientes" ? "customers" : tab === "cupons" ? "coupons" : tab === "promocoes" ? "product_variants" : "commerce_settings";
-    const fields = tab === "clientes" ? "id,name,email,phone,created_at" : tab === "promocoes" ? "id,sku,promotion_starts_at,promotion_ends_at" : "*";
+    const table = tab === "cupons" ? "coupons" : tab === "promocoes" ? "product_variants" : "commerce_settings";
+    const fields = tab === "promocoes" ? "id,sku,promotion_starts_at,promotion_ends_at" : "*";
     void client.from(table).select(fields).eq("organization_id", organizationId)
-      .order(tab === "clientes" ? "created_at" : tab === "cupons" ? "code" : tab === "promocoes" ? "sku" : "organization_id")
+      .order(tab === "cupons" ? "code" : tab === "promocoes" ? "sku" : "organization_id")
       .range(page * 25, page * 25 + 24).then(({ data, error: failure }) => {
         if (cancelled) return;
         setError(failure ? "Não foi possível carregar. Confira permissões e se a migração foi aplicada neste ambiente." : "");
@@ -70,16 +70,9 @@ export function AdminCommerce({ tab, organizationId, products }: { tab: Commerce
       } else if (tab === "promocoes") {
         ({ error: failure } = await client.rpc("schedule_variant_promotion", { target_organization_id: organizationId,
           target_variant_id: field("variant"), starts_at: form.has("clear") ? null : date("start"), ends_at: form.has("clear") ? null : date("end") }));
-      } else if (tab === "relatorios") {
-        const since = `${field("start")}T00:00:00-03:00`;
-        const until = new Date(`${field("end")}T00:00:00-03:00`);
-        until.setUTCDate(until.getUTCDate() + 1);
-        const result = await client.rpc("commerce_report", { target_organization_id: organizationId, since_date: since, until_date: until.toISOString() });
-        failure = result.error;
-        if (!failure) setRows([result.data as Row]);
       }
       if (failure) throw new Error("Não foi possível salvar ou consultar. Confira os campos, permissões e migrações do ambiente.");
-      setMessage(tab === "relatorios" ? "Relatório atualizado." : "Alteração salva."); setRevision(value => value + 1);
+      setMessage("Alteração salva."); setRevision(value => value + 1);
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Falha na operação."); }
     finally { setBusy(false); }
   }
@@ -91,12 +84,12 @@ export function AdminCommerce({ tab, organizationId, products }: { tab: Commerce
     if (failure) setError("Não foi possível alterar o cupom."); else setRevision(value => value + 1);
     setBusy(false);
   }
-  const titles = { clientes: "Clientes", cupons: "Cupons", configuracoes: "Configurações de entrega", relatorios: "Relatórios", promocoes: "Agendamento de ofertas" };
+  const titles = { cupons: "Cupons", configuracoes: "Configurações de entrega", promocoes: "Agendamento de ofertas" };
   const settings = rows[0];
   return <section className="admin-card product-editor"><h1>{titles[tab]}</h1>
     {!organizationId && <p>Conecte um ambiente Supabase para administrar dados reais.</p>}
     {error && <p className="form-error" role="alert">{error}</p>}{message && <p role="status">{message}</p>}
-    {tab !== "clientes" && <form onSubmit={submit} key={tab === "configuracoes" ? JSON.stringify(settings) : String(editing?.id || tab)}>
+    <form onSubmit={submit} key={tab === "configuracoes" ? JSON.stringify(settings) : String(editing?.id || tab)}>
       <div className="product-editor-grid">
       {tab === "configuracoes" && <>
         <label>CEP de origem<input name="origin" defaultValue={String(settings?.origin_postal_code || "")} maxLength={9}/></label>
@@ -120,17 +113,15 @@ export function AdminCommerce({ tab, organizationId, products }: { tab: Commerce
         <label>Variação<select name="variant" required>{products.flatMap(product => product.variants.map(variant => <option key={variant.id} value={variant.id}>{product.name} · {variant.name}</option>))}</select></label>
         <label><input type="checkbox" name="clear"/> Remover agendamento (manter oferta sem prazo)</label>
       </>}
-      {["cupons", "promocoes", "relatorios"].includes(tab) && <>
-        <label>Início<input name="start" type={tab === "relatorios" ? "date" : "datetime-local"} defaultValue={localDate(editing?.starts_at)} required={tab !== "promocoes"}/></label>
-        <label>Fim<input name="end" type={tab === "relatorios" ? "date" : "datetime-local"} defaultValue={localDate(editing?.ends_at)} required={tab !== "promocoes"}/></label>
+      {["cupons", "promocoes"].includes(tab) && <>
+        <label>Início<input name="start" type="datetime-local" defaultValue={localDate(editing?.starts_at)} required={tab !== "promocoes"}/></label>
+        <label>Fim<input name="end" type="datetime-local" defaultValue={localDate(editing?.ends_at)} required={tab !== "promocoes"}/></label>
       </>}
-      </div><button className="admin-primary" disabled={busy || !organizationId}>{busy ? "Aguarde…" : tab === "relatorios" ? "Consultar período" : "Salvar"}</button>
-    </form>}
-    {tab === "clientes" && <><div className="table-scroll"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th></tr></thead><tbody>{rows.map(row => <tr key={String(row.id)}><td>{String(row.name || "")}</td><td>{String(row.email || "")}</td><td>{String(row.phone || "")}</td></tr>)}</tbody></table></div><p>{!rows.length && "Nenhum cliente nesta página."}</p></>}
+      </div><button className="admin-primary" disabled={busy || !organizationId}>{busy ? "Aguarde…" : "Salvar"}</button>
+    </form>
     {tab === "cupons" && <ul>{rows.map(row => <li key={String(row.id)}>{String(row.code)} · {row.kind === "percent" ? `${row.value}%` : formatBRL(Number(row.value) / 100)} · {row.is_active ? "Ativo" : "Inativo"} <button className="table-action" disabled={busy} onClick={() => setEditing(row)}>Editar</button><button className="table-action" disabled={busy} onClick={() => void toggleCoupon(row)}>{row.is_active ? "Desativar" : "Ativar"}</button></li>)}</ul>}
     {tab === "promocoes" && <ul>{rows.map(row => <li key={String(row.id)}>{String(row.sku)}: {row.promotion_starts_at ? `${new Date(String(row.promotion_starts_at)).toLocaleString("pt-BR")} até ${new Date(String(row.promotion_ends_at)).toLocaleString("pt-BR")}` : "Sem agendamento"}</li>)}</ul>}
-    {tab === "relatorios" && rows[0] && <p>Pedidos: {String(rows[0].orders)} · Valor dos pedidos: {formatBRL(Number(rows[0].gross_cents) / 100)} · Pagamentos aprovados, descontados estornos parciais: {formatBRL(Number(rows[0].paid_cents) / 100)} · Exigem revisão: {String(rows[0].review_required)}</p>}
-    {["clientes", "cupons", "promocoes"].includes(tab) && <div><button disabled={!page} onClick={() => setPage(value => value - 1)}>Anterior</button><span> Página {page + 1} </span><button disabled={rows.length < 25} onClick={() => setPage(value => value + 1)}>Próxima</button></div>}
+    {["cupons", "promocoes"].includes(tab) && <div><button disabled={!page} onClick={() => setPage(value => value - 1)}>Anterior</button><span> Página {page + 1} </span><button disabled={rows.length < 25} onClick={() => setPage(value => value + 1)}>Próxima</button></div>}
   </section>;
 }
 

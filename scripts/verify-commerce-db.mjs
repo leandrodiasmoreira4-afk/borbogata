@@ -98,5 +98,61 @@ try {
   await db.exec("set role authenticated");
   await db.query("select public.schedule_variant_promotion($1,$2,null,null)",[org,variant]);
   check((await one("select promotion_starts_at from public.product_variants where id=$1",[variant])).promotion_starts_at,null);
+
+  // Admin workflows: financial dates, all rows, tenant isolation and atomic edits.
+  await db.exec("reset role");
+  const otherOrg = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  await db.query("insert into public.organizations(id,slug,name) values($1,'other-store','Outra loja teste')",[otherOrg]);
+  const customerId=crypto.randomUUID();
+  await db.query("insert into public.customers(id,organization_id,name,email) values($1,$2,'Cliente histórico','history@example.com')",[customerId,org]);
+  const reportIds=[];
+  for(let index=0;index<30;index++) {
+    const id=crypto.randomUUID(); reportIds.push(id);
+    await db.query("insert into public.orders(id,organization_id,customer_id,subtotal_cents,total_cents,created_at,payment_environment,customer_snapshot,shipping_address_snapshot) values($1,$2,$3,1000,1000,'2024-02-01T03:00:00Z','production',$4::jsonb,'{}'::jsonb)",[id,org,customerId,JSON.stringify({name:'Cliente histórico',email:'history@example.com'})]);
+    await db.query("insert into public.payments(organization_id,order_id,provider,external_id,status,amount_cents,paid_at,refunded_cents) values($1,$2,'mercado_pago',$3,'paid',1000,'2024-03-01T03:00:00Z',$4)",[org,id,'admin-'+index,index===0?200:0]);
+  }
+  await db.query("update public.payments set status='refunded',refunded_cents=1000 where order_id=$1",[reportIds[1]]);
+  // This payment is 29 February in Brazil and must not enter March 1.
+  await db.query("update public.payments set paid_at='2024-03-01T02:59:59Z' where order_id=$1",[reportIds[2]]);
+  await db.exec("set role authenticated");
+  const sales=async (start,end,env='production',tenant=org)=>(await one("select public.admin_sales_report($1,$2,$3,$4) as result",[tenant,start,end,env])).result;
+  const march=await sales('2024-03-01','2024-03-01');
+  check(march.orders,0); check(march.paid_orders,29); check(march.approved_cents,29000); check(march.refunded_cents,1200); check(march.net_cents,27800);
+  check(march.days.length,1);
+  check((await sales('2024-02-01','2024-02-29')).orders,30);
+  check((await sales('2024-02-29','2024-02-29')).net_cents,1000);
+  check((await sales('2024-03-01','2024-03-01','sandbox')).net_cents,0);
+  check((await sales('2024-01-01','2024-12-31')).days.length,366);
+  await assert.rejects(sales('2024-01-01','2025-01-01'),/invalid report/); checks++;
+  await assert.rejects(sales('2024-03-01','2024-03-01','production',otherOrg),/not authorized/); checks++;
+  const orderPage=async(page,search='histórico')=>(await one("select public.admin_orders_page($1,$2,'','2024-02-01','2024-02-29',$3,$4) as result",[org,search,page,customerId])).result;
+  check((await orderPage(0)).total,30); check((await orderPage(0)).rows.length,25); check((await orderPage(1)).rows.length,5);
+  check(new Set([...(await orderPage(0)).rows,...(await orderPage(1)).rows].map(row=>row.id)).size,30);
+  check((await orderPage(0,"' OR true --")).total,0);
+  await db.query("select public.admin_save_customer($1,$2,'Nome corrigido','updated@example.com','71999999999')",[org,customerId]);
+  check((await one("select name from public.customers where id=$1",[customerId])).name,'Nome corrigido');
+  check((await one("select customer_snapshot->>'name' as name from public.orders where id=$1",[reportIds[0]])).name,'Cliente histórico');
+  const clients=(await one("select public.admin_customers_page($1,'updated@example.com',0) as result",[org])).result;
+  check(clients.total,1);check(clients.rows[0].id,customerId);
+  await assert.rejects(db.query("select public.admin_save_customer($1,$2,'No','bad','abc')",[org,customerId]),/invalid customer/);checks++;
+  await assert.rejects(db.query("select public.admin_save_customer($1,$2,'Other','ok@example.com','')",[otherOrg,customerId]),/not authorized/);checks++;
+  const collection=(await one("select public.create_collection_with_products($1,'test-collection','Coleção teste','Descrição',$2,'2024-02-01',array['22222222-2222-4222-8222-222222222222'::uuid],false) as id",[org,org+'/collections/test.jpg'])).id;
+  const editCollection=(ids,tenant=org)=>db.query("select public.update_collection_with_products($1,$2,'Coleção editada','Nova descrição',$3,'2024-03-01',$4::uuid[],true)",[tenant,collection,org+'/collections/new.jpg',ids]);
+  await editCollection(['22222222-2222-4222-8222-222222222222']);
+  check(await one("select name,slug,description,is_featured from public.collections where id=$1",[collection]),{name:'Coleção editada',slug:'test-collection',description:'Nova descrição',is_featured:true});
+  await assert.rejects(editCollection([crypto.randomUUID()]),/invalid collection/);checks++;
+  check((await one("select count(*)::int as count from public.collection_products where collection_id=$1",[collection])).count,1);
+  await assert.rejects(editCollection(['22222222-2222-4222-8222-222222222222'],otherOrg),/not authorized/);checks++;
+  await db.exec("reset role");await db.query("update public.organization_members set role='catalog' where organization_id=$1",[org]);await db.exec("set role authenticated");
+  await assert.rejects(sales('2024-03-01','2024-03-01'),/not authorized/);checks++;
+  await assert.rejects(orderPage(0),/not authorized/);checks++;
+  await assert.rejects(db.query("select public.admin_customers_page($1,'',0)",[org]),/not authorized/);checks++;
+  await assert.rejects(db.query("select public.admin_save_customer($1,$2,'No access','','')",[org,customerId]),/not authorized/);checks++;
+  await editCollection(['22222222-2222-4222-8222-222222222222']);checks++;
+  await db.exec("reset role");await db.query("update public.organization_members set role='orders' where organization_id=$1",[org]);await db.exec("set role authenticated");
+  await assert.rejects(editCollection(['22222222-2222-4222-8222-222222222222']),/not authorized/);checks++;
+  await db.exec("reset role;set role anon");
+  await assert.rejects(sales('2024-03-01','2024-03-01'),/permission denied/);checks++;
+
   console.log(JSON.stringify({ passed: checks, migrations: "all applied in isolated PostgreSQL/WASM", externalServices: "not tested" },null,2));
 } finally { await db.close(); }

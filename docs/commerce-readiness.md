@@ -4,7 +4,7 @@ Atualizado em 13/10/2026. Este documento descreve código preparado e testes loc
 
 ## Escopo preservado
 
-Repositório existente `leandrodiasmoreira4-afk/borbogata`. Mantidos React, TypeScript, Next.js/Vinext, Supabase e execução Cloudflare. Nenhuma alteração na home, identidade, CSS ou imagens comerciais; nenhum deploy. Novos formulários administrativos reutilizam as classes existentes.
+Repositório existente `leandrodiasmoreira4-afk/borbogata`. Mantidos React, TypeScript, Next.js/Vinext, Supabase e execução Cloudflare. Nenhuma alteração na home, identidade ou imagens comerciais; nenhum deploy. Os controles novos reutilizam o visual existente. Ajustes CSS ficam restritos ao painel, incluindo correção de overflow no tablet e rótulos dos botões no celular. Preset L7 Web App com administração, Supabase e segurança; pagamentos reais e publicação permanecem desativados.
 
 ## Evidências da auditoria inicial
 
@@ -20,17 +20,28 @@ Repositório existente `leandrodiasmoreira4-afk/borbogata`. Mantidos React, Type
 |---|---|---|
 | Produtos | Validação de limites monetários e estoque; preço efetivo por período | Exclusão física não adicionada; arquivamento preserva histórico |
 | Ofertas | Agendamento por variação, início inclusivo/fim exclusivo; fora da janela volta ao preço anterior | Exige preço anterior maior que preço de venda; configuração de datas usa fuso do navegador |
-| Clientes | Consulta paginada de nome, e-mail e telefone sob RLS | Sem exportação, edição ou unificação automática de compradores visitantes |
+| Clientes | Cadastro, edição, busca por nome/e-mail/telefone, paginação e histórico de compras sob RLS; snapshots de pedidos preservados | Sem unificação automática de compradores visitantes |
 | Cupons | Cadastro, edição, ativação, período, mínimo, valor fixo/percentual; acúmulo com oferta só se habilitado | Sem limite de utilizações/global/por CPF; configurar isso exigiria nova regra |
-| Relatórios | Agregação no banco por período, totais, pagamentos líquidos de estornos parciais e pedidos em revisão | Visão geral antiga continua limitada aos 20 pedidos; relatório não é contabilidade |
+| Relatórios | Dia, semana, mês, ano e intervalo personalizado, resumo na visão geral, detalhamento diário e CSV; agregação de todos os registros do período no banco | Até 366 dias por consulta; relatório operacional, não contabilidade ou lucro |
 | Configurações | Retirada e instruções; taxa de motoboy e prefixos de CEP; CEP de origem | Tudo desativado por padrão; não foram inventadas taxas ou horários |
 | Checkout | Validação no servidor, CEP via ViaCEP, preço recalculado no banco, cupom, reserva e pedido atômicos | Exclusivo para homologação separada e Mercado Pago de teste |
 | Pagamento | Preferência com referência ao pedido, URL sandbox, timeout e redirecionamento restrito | Não há modo de produção nesta entrega |
 | Webhook | HMAC, consulta à API, conferência de ID/recebedor/moeda/valor/modo, idempotência por versão e transação | Exige URL pública HTTPS e segredo de webhook de testes |
-| Estoque | Reserva por 15 minutos e confirmação única; eventos antigos/duplicados não repetem baixa | Expiração periódica real depende do Cron Supabase |
+| Estoque | Saldo físico/reservado/disponível por cor/tamanho, filtro de baixo estoque, reposição/saída e histórico paginado; reserva por 15 minutos e confirmação única | Expiração periódica real depende do Cron Supabase; movimentação presencial de estoque não cria receita |
 | Exceções | Pagamento tardio, duplicado, parcial/totalmente estornado ou contestado exige revisão; entrega bloqueada | Sem estorno financeiro automático nem reposição automática de produto devolvido |
-| Pedidos | Banco impede avanço sem pagamento válido, mudanças financeiras pelo navegador e rastreio inválido | Cancelamento financeiro/manual review precisa de procedimento operacional antes da produção |
-| Coleções/imagens | Funcionalidades existentes preservadas | Não foi adicionada edição completa de coleção existente ou transformação de imagens |
+| Pedidos | Histórico completo paginado, busca por número/nome/e-mail, filtros de status/data, identificação de teste/revisão; banco impede avanço sem pagamento válido e rastreio inválido | Cancelamento financeiro/manual review precisa de procedimento operacional antes da produção |
+| Coleções/imagens | Criar/editar nome, descrição, capa, data e composição; manter URL e status ao editar; destacar/arquivar | Sem transformação automática de imagens; trocar capa preserva arquivo anterior para não quebrar referências |
+
+## Critérios dos novos relatórios e consultas
+
+- Usa o fuso America/Sao_Paulo. Semana de segunda a domingo. Datas inicial e final inclusivas na interface, convertidas para intervalo semiaberto no banco.
+- Pedidos são contados por criação; pagamentos por primeira aprovação persistida em paid_at. Cancelados/pendentes não entram como pagamentos aprovados. Estornos totais e contestações já mapeadas como refunded removem todo o valor; parciais descontam refunded_cents.
+- O estorno atualiza o período da aprovação original, não o dia do reembolso. Pagamentos sem paid_at não são inventados no relatório. Valores incluem frete, antes de taxas/custos/impostos. Pedidos duplicadamente pagos podem aparecer com mais de um recebimento e precisam de revisão.
+- Produção, sandbox e pedidos antigos sem classificação são consultados separadamente. Nenhum teste entra no padrão de vendas reais.
+- A visão geral usa a mesma consulta integral; apenas sua tabela de pedidos recentes permanece limitada a 20 por conveniência. O módulo Pedidos percorre todo o histórico em páginas de 25.
+- Busca do cabeçalho permite escolher produtos (nome/slug/SKU/cor/tamanho), coleções, pedidos ou clientes. As consultas de pedidos/clientes filtram no banco antes de paginar. O catálogo é carregado em páginas explícitas, evitando truncamento pelo limite padrão da API.
+- Nova migração: supabase/migrations/20261013095404_admin_management_reports.sql. Deve ser promovida antes da interface correspondente. Não foi aplicada ao projeto remoto.
+- RPCs novas usam SECURITY INVOKER, search_path vazio, autorização por organização/papel e grants apenas a authenticated; catálogo não acessa relatórios/clientes e equipe de pedidos não edita coleções. Operações editáveis registram auditoria sem copiar dados pessoais para os logs.
 
 ## Segurança e idempotência
 
@@ -102,11 +113,25 @@ pnpm dev --host 127.0.0.1
 node scripts/verify-commerce-browser.mjs
 ```
 
-- 31 testes de código passaram.
-- 34 asserções de integração PostgreSQL/WASM passaram, aplicando todas as migrações. Auth/Storage são estruturas simuladas; instalação/agendamento de `pg_cron` é omitida nesse teste. A função de expiração foi executada.
+- 34 testes de código passaram, incluindo calendário, virada de ano, ano bissexto, limite de datas e leitura além do limite padrão da API.
+- 68 asserções de integração PostgreSQL/WASM passaram, aplicando todas as migrações. Auth/Storage são estruturas simuladas; instalação/agendamento de `pg_cron` é omitida nesse teste. A função de expiração foi executada.
 - Navegador Chrome: fluxo produto → checkout, validação de endereço, pagamento desativado e retorno em 390, 768 e 1440 px; sem erro de JavaScript e sem overflow horizontal. Imagens e resultados locais em `outputs/`, não versionados.
 - Tipos, lint e build: consultar o resultado final da rodada no PR. O lint passou a ignorar diretório antigo `.sites-stage-*`, que continha artefatos gerados e não foi modificado.
 - Sem compra externa, publicação, alteração de banco remoto, teste de serviços Auth/Storage reais ou medição de Core Web Vitals. SEO e direção visual não foram objeto desta implementação; retorno do pagamento marcado para não indexação.
+
+## Teste local do painel sem credenciais
+
+O script scripts/verify-admin-browser.mjs liga a interface às funções SQL reais em PostgreSQL/WASM. Auth, Storage e transporte PostgREST são simulados com dados fictícios, claramente separados da homologação externa. Não verifica login/upload hospedados, concorrência real ou rede do Supabase.
+
+Em um terminal temporário PowerShell, iniciar um preview de teste separado:
+
+```powershell
+$env:NEXT_PUBLIC_SUPABASE_URL='https://admin-test.supabase.co'
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='sb_publishable_local_fixture'
+node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5174 --strictPort
+```
+
+Em outro terminal, executar node scripts/verify-admin-browser.mjs. Encerrar o terminal temporário ao terminar para descartar as variáveis fictícias. O teste cobre filtros dia/semana/mês/ano, totais de 30 pedidos, CSV, falha/recuperação de relatório, paginação, busca vazia, edição/cadastro/busca de clientes, histórico individual, edição de coleção preservando URL, busca por SKU, reposição e histórico de estoque. Viewports: 390, 768 e 1440 px; screenshots em outputs/. Chaves desse cenário são apenas marcadores fictícios.
 
 ## Arquivos principais
 
@@ -121,3 +146,5 @@ node scripts/verify-commerce-browser.mjs
 - `lib/catalog/promotion.ts`: preço por período.
 - `supabase/migrations/20261013000751_commerce_checkout_operations.sql`: migração pendente de homologação.
 - `scripts/verify-commerce-{db,browser}.*` e `tests/`: evidências reproduzíveis.
+
+Referências consultadas nesta rodada: [funções com autorização](https://supabase.com/docs/guides/database/functions), [paginação](https://supabase.com/docs/reference/javascript/range) e [changelog](https://supabase.com/changelog).
